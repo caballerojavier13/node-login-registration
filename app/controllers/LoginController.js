@@ -40,7 +40,7 @@ exports.session = {
 					// if user is found and password is right
 					// create a token
 					var token = jwt.sign(user, config.secret, {
-						expiresInMinutes: 1// expires in 24 hours
+						expiresInMinutes: 1440// expires in 24 hours
 					});
 					
 					var session = new Session();
