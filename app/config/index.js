@@ -4,7 +4,7 @@
 
 var config = {
     app_port: 8000,
-    host: "localhost",
+    host: "0.0.0.0",
     db_name: "logindb",
     db_port: 27017,
     secret: 'mysecretkey'
