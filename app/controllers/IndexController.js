@@ -4,8 +4,7 @@
  * @returns response(object) a welcome message as response to API caller.
  */
 exports.getWelcomeMessage = function(req, res) {
-    console.log(req.url);
-
-    res.json({statusCode: 200, success: true, message:"Welcome to Node API"});
+	
+    res.json({statusCode: 200, success: true, message:"Autenticated!"});
 
 };

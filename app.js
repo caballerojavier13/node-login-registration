@@ -38,12 +38,19 @@ app.use(function (req, res, next) {
 //Call route's index /app/routes.js
 app.use('/', routes);
 
+app.use(function(req, res, next) {
+    var err = new Error('Not Found');
+    err.status = 404;
+    next(err);
+	return res.json({success: false, status: err.status, errorMessage: 'Not found ' + req.originalUrl});
+});
+
 //error handler, if request parameters do not fullfil validations a error message would be sent back as response.
 app.use(function (err, req, res, next) {
     // specific for validation errors
     if (err instanceof validate.ValidationError) {
 
-        return res.json({status: err.status, errorMessage: err});
+        return res.json({success: false, status: err.status, errorMessage: err});
 
     }
 });

@@ -3,6 +3,7 @@
  */
 //=================Load all required module=============================================================
 var User = require('../models/user');
+var Session = require('../models/session'); //Session model so
 
 exports.user = {
     /**
@@ -30,7 +31,8 @@ exports.user = {
                 var user = new User();
                 user.firstName = req.body.firstName;
                 user.lastName = req.body.lastName;
-                user.username = req.body.email;
+                user.email = req.body.email;
+				user.username = req.body.username;
                 user.password = req.body.password;
                 user.save(function (err) {
                     if (err) {
@@ -55,13 +57,53 @@ exports.user = {
      */
 
     getAllUsers: function (req, res) {
-        User.find({}, function (err, users) {
+        User.find({"email:": req.query.email}, function (err, users) {
             //If there is any error connecting with database or fetching result, send error message as response.
             if (err) {
                 res.json({success: false, statusCode: 500, errorMessage: err});
             }
             //If able to fetch all users then send them in response in data key.
             res.json({success: true, statusCode: 200, data: users});
+        })
+
+    },
+	
+	/**
+     * Register a user with application on end point '/api/user/:id'
+     *
+     * @param  {req as json} x-access-token to get access of API
+     * @return {res as json} success as false(failure) or true(success), status code and data of a user in system.
+     */
+	
+	getUser: function (req, res) {
+		
+		var token = req.body.token || req.query.token || req.headers['x-access-token'];
+		
+        Session.find({"token":token}, function (err, session) {
+            //If there is any error connecting with database or fetching result, send error message as response.
+            if (err) {
+                res.json({success: false, statusCode: 500, errorMessage: err});
+            }
+			User.find({"id": session.user_id},function(err,user){
+				if (err) {
+					res.json({success: false, statusCode: 500, errorMessage: err});
+				}
+				//If able to fetch all users then send them in response in data key.
+				res.json({success: true, statusCode: 200, data: user});
+			})			
+            
+        })
+
+    },
+	
+	deleteUser: function (req, res) {
+        User.remove({"id":req.id}, function (err, user) {
+            //If there is any error connecting with database or fetching result, send error message as response.
+            if (err) {
+                res.json({success: false, statusCode: 500, errorMessage: err});
+            }
+            //If able to fetch all users then send them in response in data key.
+            res.json({success: true, statusCode: 200});
         })
 
     }

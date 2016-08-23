@@ -12,6 +12,7 @@ module.exports.register = {
         firstName: Joi.string(), //First Name should be a string otherwise send a error message
         lastName: Joi.string(),   //Last Name should be a string otherwise send a error message
         email: Joi.string().email().required(), //Email should be as email format and required to be present in request body
+		username: Joi.string().required(), //Phone number should be number formatted and must be present in request body
         password: Joi.string().required() //Phone number should be number formatted and must be present in request body
     }
 };
@@ -19,7 +20,7 @@ module.exports.register = {
 module.exports.login = {
     options: {flatten: true},
     body: {
-        email: Joi.string().email().required(), //Email should be as email format and required to be present in request body
+        username: Joi.string().required(), //Email should be as email format and required to be present in request body
         password: Joi.string().required() //Phone number should be number formatted and must be present in request body
     }
 };
