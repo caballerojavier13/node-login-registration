@@ -117,7 +117,11 @@ router.route('/api/login')
     .post(LoginController.session.login);
 router.route('/api/logout')
     .delete(LoginController.session.logout);
+router.route('/api/logout/all')
+    .delete(LoginController.session.logoutAll);
 router.route('/api/sessions')
+    .get(LoginController.session.getMySessions);
+router.route('/api/sessions/all')
     .get(LoginController.session.getAllSessions);
 //export router module.
 module.exports = router;

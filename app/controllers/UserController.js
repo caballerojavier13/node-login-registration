@@ -79,17 +79,30 @@ exports.user = {
 		
 		var token = req.body.token || req.query.token || req.headers['x-access-token'];
 		
-        Session.find({"token":token}, function (err, session) {
+        Session.findOne({"token":token}, function (err, session) {
             //If there is any error connecting with database or fetching result, send error message as response.
             if (err) {
                 res.json({success: false, statusCode: 500, errorMessage: err});
             }
-			User.find({"id": session.user_id},function(err,user){
+			User.findOne({"_id": session.user_id},function(err,user){
+				
 				if (err) {
 					res.json({success: false, statusCode: 500, errorMessage: err});
 				}
+				
 				//If able to fetch all users then send them in response in data key.
-				res.json({success: true, statusCode: 200, data: user});
+				res.json({
+					success: true, 
+					statusCode: 200,
+					data: {
+						id: user._id,
+						firstName: user.firstName,
+						lastName: user.lastName,
+						is_admin: user.is_admin,
+						email: user.email,
+						username: user.username
+					}						
+				});
 			})			
             
         })

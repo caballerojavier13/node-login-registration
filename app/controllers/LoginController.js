@@ -44,8 +44,11 @@ exports.session = {
 					});
 					
 					var session = new Session();
+					
 					session.user_id = user.id;
 					session.token = token;
+					session.app_name = req.body.app_name;
+					
 					session.save(function (err) {
 						if (err) {
 							return res.json({success: false, statusCode: 500, errorMessage: err});
@@ -55,6 +58,14 @@ exports.session = {
 							success: true,
 							statusCode: 200,
 							message: 'You are logged in successfully!',
+							user: {
+								id: user._id,
+								firstName: user.firstName,
+								lastName: user.lastName,
+								is_admin: user.is_admin,
+								email: user.email,
+								username: user.username
+							},
 							token: token
 						});
 
@@ -84,15 +95,94 @@ exports.session = {
 		
 	},
 	
+	logoutAll: function (req, res) {
+		
+		var token = req.body.token || req.query.token || req.headers['x-access-token'];
+		
+		Session.findOne({
+			token: token
+		}, function (err, session) {
+
+			//If there is any error is finding or doing operation in database
+			if (err) {
+				res.json({success: false, statusCode: 500, errorMessage: err});
+			}
+			
+			Session.remove({
+				"user_id": session.user_id
+			}, function (err, session) {
+
+				//If there is any error is finding or doing operation in database
+				if (err) {
+					res.json({success: false, statusCode: 500, errorMessage: err});
+				}
+				
+				res.json({success: true, statusCode: 200});
+			})
+		})
+		
+	},
+	
 	getAllSessions: function (req, res) {
-        Session.find({}, function (err, sessions) {
+        
+		
+		var token = req.body.token || req.query.token || req.headers['x-access-token'];
+		
+        Session.findOne({"token":token}, function (err, session) {
             //If there is any error connecting with database or fetching result, send error message as response.
             if (err) {
                 res.json({success: false, statusCode: 500, errorMessage: err});
             }
+			User.findOne({"_id": session.user_id},function(err,user){
+				if (err) {
+					res.json({success: false, statusCode: 500, errorMessage: err});
+				}
+				if(user.is_admin){
+					Session.find({}, function (err, sessions) {
+						//If there is any error connecting with database or fetching result, send error message as response.
+						if (err) {
+							res.json({success: false, statusCode: 500, errorMessage: err});
+						}
+						
+						res.json({success: true, statusCode: 200, data: sessions});
+					})
+				}else{
+					
+					return res.json({success: false, statusCode: 403, errMessage: 'Unauthorized Access: No admin user'});
+					
+				}
+			})			
             
-            res.json({success: true, statusCode: 200, data: sessions});
-        })
+		})
+	},
+	
+	getMySessions: function (req, res) {
+        
+		
+		var token = req.body.token || req.query.token || req.headers['x-access-token'];
+		
+        Session.findOne({"token":token}, function (err, session) {
+            //If there is any error connecting with database or fetching result, send error message as response.
+            if (err) {
+                res.json({success: false, statusCode: 500, errorMessage: err});
+            }
+			User.findOne({"_id": session.user_id},function(err,user){
+				if (err) {
+					res.json({success: false, statusCode: 500, errorMessage: err});
+				}
+				
+				Session.find({"user_id": user._id}, function (err, sessions) {
+					//If there is any error connecting with database or fetching result, send error message as response.
+					if (err) {
+						res.json({success: false, statusCode: 500, errorMessage: err});
+					}
+					
+					res.json({success: true, statusCode: 200, data: sessions});
+					
+				})	
+            
+			})
 
-    }
+		})
+	}
 };

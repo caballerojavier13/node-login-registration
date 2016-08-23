@@ -2,12 +2,14 @@
 //Mongoose is a MongoDB object modeling tool designed to work in an asynchronous environment.
 var mongoose = require('mongoose');
 var bcrypt = require('bcrypt-nodejs');
+var uniqueValidator = require('mongoose-unique-validator');
 var SALT_WORK_FACTOR = 10;
 var UserSchema = new mongoose.Schema({
     firstName: String,  //String type
     lastName: String,  //String type
-    email: {type: String, required: true},  //String type and required
-	username: {type: String, required: true},  //String type and required
+	is_admin: {type: Boolean, default: false },
+    email: {type: String, required: true, unique: true},  //String type and required
+	username: {type: String, required: true, unique: true},  //String type and required
     password: {type: String, required: true}, //Number type and required
 });
 
