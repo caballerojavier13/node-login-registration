@@ -19,7 +19,8 @@ exports.session = {
 	login: function (req, res) {
 		// find the user in database
 		User.findOne({
-			username: req.body.username
+			"username": req.body.username,
+			deleted: {$ne: true}
 		}, function (err, user) {
 
 			//If there is any error is finding or doing operation in database
@@ -36,41 +37,48 @@ exports.session = {
 				if (!user.comparePassword(req.body.password)) {
 					res.json({success: false, statusCode: 403, errorMessage: 'Authentication failed. Wrong password.'});
 				} else {
-
-					// if user is found and password is right
-					// create a token
-					var token = jwt.sign(user, config.secret, {
-						expiresInMinutes: 1440// expires in 24 hours
-					});
 					
-					var session = new Session();
-					
-					session.user_id = user.id;
-					session.token = token;
-					session.app_name = req.body.app_name;
-					
-					session.save(function (err) {
-						if (err) {
-							return res.json({success: false, statusCode: 500, errorMessage: err});
-						}
-						// return the information including token as JSON
-						return res.json({
-							success: true,
-							statusCode: 200,
-							message: 'You are logged in successfully!',
-							user: {
-								id: user._id,
-								firstName: user.firstName,
-								lastName: user.lastName,
-								is_admin: user.is_admin,
-								email: user.email,
-								username: user.username
-							},
-							token: token
+					if(!user.active){
+						
+						// if user is found and password is right
+						// create a token
+						var token = jwt.sign(user, config.secret, {
+							"expiresIn": 1440 * 60// expires in 24 hours
 						});
+						
+						var session = new Session();
+						
+						session.user_id = user.id;
+						session.token = token;
+						session.app_name = req.body.app_name;
+						
+						session.save(function (err) {
+							if (err) {
+								return res.json({success: false, statusCode: 500, errorMessage: err});
+							}
+							// return the information including token as JSON
+							return res.json({
+								success: true,
+								statusCode: 200,
+								message: 'You are logged in successfully!',
+								user: {
+									id: user._id,
+									firstName: user.firstName,
+									lastName: user.lastName,
+									is_admin: user.is_admin,
+									email: user.email,
+									username: user.username
+								},
+								token: token
+							});
 
-					});
+						});
+						
+					}else{
 
+						return res.json({success: false, statusCode: 403, errorMessage: 'Account not activated. Please check your email'});
+						
+					}
 					
 				}
 

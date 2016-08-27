@@ -29,7 +29,7 @@ var Session = require('./models/session'); //Session model so
 // route middleware to verify a token
 router.use(function (req, res, next) {
     console.log(req.originalUrl);
-    if (req.originalUrl === '/api/login' || req.originalUrl === '/api/register') {
+    if (req.originalUrl === '/api/login' || req.originalUrl === '/api/register' || req.originalUrl === '/api/user/activate') {
         return next();
     } else {
 		// check header or url parameters or post parameters for token
@@ -50,12 +50,12 @@ router.use(function (req, res, next) {
 							statusCode: 401,
 							errMessage: 'Unauthorized Access: Failed to authenticate token.'
 						});
-						
+
 					})
-					
+
 				} else {
 					// if everything is good, save to request for use in other routes
-					
+
 					Session.find({"token":token}, function (err, session) {
 						//If there is any error connecting with database or fetching result, send error message as response.
 						if (err) {
@@ -67,7 +67,7 @@ router.use(function (req, res, next) {
 						}else{
 							if(session.length){
 								req.decoded = decoded;
-						
+
 								next();
 							}else{
 								return res.json({
@@ -76,11 +76,11 @@ router.use(function (req, res, next) {
 									errMessage: 'Unauthorized Access: Failed to authenticate token.'
 								});
 							}
-							
+
 						}
-						
+
 					})
-					
+
 				}
 			});
 
@@ -91,7 +91,7 @@ router.use(function (req, res, next) {
 			return res.json({success: false, statusCode: 403, errMessage: 'Unauthorized Access: No token provided'});
 
 		}
-	
+
     }
 
 
@@ -108,7 +108,14 @@ router.route('/api/users')
     .get(UserController.user.getAllUsers)
 router.route('/api/user')
     .get(UserController.user.getUser)
-	.delete(UserController.user.deleteUser)
+    .put(UserController.user.editUser)
+	  .delete(UserController.user.deleteUser)
+router.route('/api/user/:id')
+    .put(UserController.user.editAsAdmin)
+router.route('/api/user/activate')
+    .get(UserController.user.activate)
+router.route('/api/user/:id/makeadmin')
+    .post(UserController.user.makeAdmin)
 router.route('/api/register')
     .post(validate(validation.register), UserController.user.register);
 

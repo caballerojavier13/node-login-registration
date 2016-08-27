@@ -8,6 +8,9 @@ var UserSchema = new mongoose.Schema({
     firstName: String,  //String type
     lastName: String,  //String type
 	is_admin: {type: Boolean, default: false },
+	active: {type: Boolean, default: false },
+	token_activation: String,
+	deleted: {type: Boolean, default: false },
     email: {type: String, required: true, unique: true},  //String type and required
 	username: {type: String, required: true, unique: true},  //String type and required
     password: {type: String, required: true}, //Number type and required

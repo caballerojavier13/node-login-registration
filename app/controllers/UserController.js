@@ -3,6 +3,8 @@
  */
 //=================Load all required module=============================================================
 var User = require('../models/user');
+var crypto = require('crypto');
+var base64url = require('base64url');
 var Session = require('../models/session'); //Session model so
 
 exports.user = {
@@ -28,12 +30,14 @@ exports.user = {
             // save all user information in User collection.
 
             else {
+				var token_activation = base64url(crypto.randomBytes(10))
                 var user = new User();
                 user.firstName = req.body.firstName;
                 user.lastName = req.body.lastName;
                 user.email = req.body.email;
 				user.username = req.body.username;
                 user.password = req.body.password;
+				user.token_activation = token_activation;
                 user.save(function (err) {
                     if (err) {
                         return res.json({success: false, statusCode: 500, errorMessage: err});
@@ -48,6 +52,167 @@ exports.user = {
 
 
     },
+	
+	activate: function (req, res) {
+
+		User.findOne({"_id": req.query.id, 'token_activation' : req.query.token_activation},function(err,user){
+
+			if (err) {
+				
+				return res.json({success: false, statusCode: 500, errorMessage: err});
+				
+			}else {
+				
+				if(user){
+					user.active = true;
+					user.save(function (err) {
+						if (err) {
+							return res.json({success: false, statusCode: 500, errorMessage: err});
+						}
+
+						return res.json({
+							success: true,
+							statusCode: 200,
+							message: "User has edited successfully",
+							user: {
+								id: user._id,
+								firstName: user.firstName,
+								lastName: user.lastName,
+								is_admin: user.is_admin,
+								email: user.email,
+								username: user.username,
+							deleted: user.deleted
+							}
+						});
+
+					});
+				}else{
+					return res.json({success: false, statusCode: 404, errorMessage: 'User not found'});
+				}
+				
+			}
+				
+		})
+
+    },
+
+	editAsAdmin: function (req, res) {
+
+		var token = req.body.token || req.query.token || req.headers['x-access-token'];
+
+        Session.findOne({"token":token}, function (err, session) {
+            //If there is any error connecting with database or fetching result, send error message as response.
+            if (err) {
+                res.json({success: false, statusCode: 500, errorMessage: err});
+            }
+			User.findOne({"_id": session.user_id},function(err,user){
+				if (err) {
+					res.json({success: false, statusCode: 500, errorMessage: err});
+				}
+				if(user.is_admin){
+
+					User.findById(req.params.id, function (err, user) {
+
+						if (err) {
+							return res.json({success: false, statusCode: 500, errorMessage: err});
+						}else {
+							user.firstName = req.body.firstName;
+							user.lastName = req.body.lastName;
+							user.email = req.body.email;
+							user.username = req.body.username;
+							user.save(function (err) {
+								if (err) {
+									return res.json({success: false, statusCode: 500, errorMessage: err});
+								}
+
+								return res.json({
+									success: true,
+									statusCode: 200,
+									message: "User has edited successfully",
+									user: {
+										id: user._id,
+										firstName: user.firstName,
+										lastName: user.lastName,
+										is_admin: user.is_admin,
+										email: user.email,
+										username: user.username,
+										deleted: user.deleted
+									}
+								});
+
+							});
+						}
+					});
+
+				}else{
+
+					return res.json({success: false, statusCode: 403, errMessage: 'Unauthorized Access: No admin user'});
+
+				}
+			})
+
+		})
+
+
+    },
+
+	makeAdmin: function (req, res) {
+
+		var token = req.body.token || req.query.token || req.headers['x-access-token'];
+
+        Session.findOne({"token":token}, function (err, session) {
+            //If there is any error connecting with database or fetching result, send error message as response.
+            if (err) {
+                res.json({success: false, statusCode: 500, errorMessage: err});
+            }
+			User.findOne({"_id": session.user_id},function(err,user){
+				if (err) {
+					res.json({success: false, statusCode: 500, errorMessage: err});
+				}
+				if(user.is_admin){
+
+					User.findOne({"_id": req.params.id}, function (err, user) {
+
+						if (err) {
+							return res.json({success: false, statusCode: 500, errorMessage: err});
+						}else {
+
+							user.is_admin = true;
+							user.save(function (err) {
+								if (err) {
+									return res.json({success: false, statusCode: 500, errorMessage: err});
+								}
+
+								return res.json({
+									success: true,
+									statusCode: 200,
+									message: "User has edited successfully",
+									user: {
+										id: user._id,
+										firstName: user.firstName,
+										lastName: user.lastName,
+										is_admin: user.is_admin,
+										email: user.email,
+										username: user.username,
+										deleted: user.deleted
+									}
+								});
+
+							});
+						}
+					});
+
+				}else{
+
+					return res.json({success: false, statusCode: 403, errMessage: 'Unauthorized Access: No admin user'});
+
+				}
+			})
+
+		})
+
+
+    },
 
     /**
      * Register a user with application on end point '/api/users'
@@ -57,67 +222,203 @@ exports.user = {
      */
 
     getAllUsers: function (req, res) {
-        User.find({"email:": req.query.email}, function (err, users) {
-            //If there is any error connecting with database or fetching result, send error message as response.
-            if (err) {
-                res.json({success: false, statusCode: 500, errorMessage: err});
-            }
-            //If able to fetch all users then send them in response in data key.
-            res.json({success: true, statusCode: 200, data: users});
-        })
-
-    },
-	
-	/**
-     * Register a user with application on end point '/api/user/:id'
-     *
-     * @param  {req as json} x-access-token to get access of API
-     * @return {res as json} success as false(failure) or true(success), status code and data of a user in system.
-     */
-	
-	getUser: function (req, res) {
 		
 		var token = req.body.token || req.query.token || req.headers['x-access-token'];
-		
+
         Session.findOne({"token":token}, function (err, session) {
             //If there is any error connecting with database or fetching result, send error message as response.
             if (err) {
                 res.json({success: false, statusCode: 500, errorMessage: err});
             }
 			User.findOne({"_id": session.user_id},function(err,user){
-				
 				if (err) {
 					res.json({success: false, statusCode: 500, errorMessage: err});
 				}
-				
-				//If able to fetch all users then send them in response in data key.
-				res.json({
-					success: true, 
-					statusCode: 200,
-					data: {
-						id: user._id,
-						firstName: user.firstName,
-						lastName: user.lastName,
-						is_admin: user.is_admin,
-						email: user.email,
-						username: user.username
-					}						
-				});
-			})			
-            
-        })
+				if(user.is_admin){
+
+					User.find({
+						'firstName' : new RegExp(req.query.firstname, 'i'),
+						'lastName' : new RegExp(req.query.lastname, 'i'),
+						'email' : new RegExp(req.query.email, 'i'),
+						'username' : new RegExp(req.query.username, 'i'),
+						'is_admin' : req.query.is_admin == null ? {$in: [true, false]} : {$in: [req.query.is_admin]}
+						}, function (err, users) {
+						//If there is any error connecting with database or fetching result, send error message as response.
+						if (err) {
+							res.json({success: false, statusCode: 500, errorMessage: err});
+						}
+						//If able to fetch all users then send them in response in data key.
+						res.json({success: true, statusCode: 200, data: users});
+					})
+
+				}else{
+
+					return res.json({success: false, statusCode: 403, errMessage: 'Unauthorized Access: No admin user'});
+
+				}
+			})
+
+		})
 
     },
 	
+	
+
+	/**
+     * Register a user with application on end point '/api/user/:id'
+     *
+     * @param  {req as json} x-access-token to get access of API
+     * @return {res as json} success as false(failure) or true(success), status code and data of a user in system.
+     */
+
+	getUser: function (req, res) {
+
+		var token = req.body.token || req.query.token || req.headers['x-access-token'];
+
+        Session.findOne({"token":token}, function (err, session) {
+            //If there is any error connecting with database or fetching result, send error message as response.
+            if (err) {
+                res.json({success: false, statusCode: 500, errorMessage: err});
+            }
+      			User.findOne({"_id": session.user_id},function(err,user){
+
+      				if (err) {
+      					res.json({success: false, statusCode: 500, errorMessage: err});
+      				}
+
+      				//If able to fetch all users then send them in response in data key.
+      				res.json({
+      					success: true,
+      					statusCode: 200,
+      					data: {
+      						id: user._id,
+      						firstName: user.firstName,
+      						lastName: user.lastName,
+      						is_admin: user.is_admin,
+      						email: user.email,
+      						username: user.username,
+							deleted: user.deleted							
+      					}
+      				});
+      			})
+
+          })
+
+    },
+
+    editUser: function (req, res) {
+
+      var token = req.body.token || req.query.token || req.headers['x-access-token'];
+
+          Session.findOne({"token":token}, function (err, session) {
+              //If there is any error connecting with database or fetching result, send error message as response.
+              if (err) {
+                  res.json({success: false, statusCode: 500, errorMessage: err});
+              }
+				User.findOne({"_id": session.user_id},function(err,user){
+
+					if (err) {
+					  res.json({success: false, statusCode: 500, errorMessage: err});
+					}else {
+						user.firstName = req.body.firstName;
+						user.lastName = req.body.lastName;
+						user.email = req.body.email;
+						user.username = req.body.username;
+						user.save(function (err) {
+							if (err) {
+								return res.json({success: false, statusCode: 500, errorMessage: err});
+							}
+
+							return res.json({
+								success: true,
+								statusCode: 200,
+								message: "User has edited successfully",
+								user: {
+									id: user._id,
+									firstName: user.firstName,
+									lastName: user.lastName,
+									is_admin: user.is_admin,
+									email: user.email,
+									username: user.username,
+									deleted: user.deleted
+								}
+							});
+
+						});
+					}				
+				});
+              })
+
+      },
+
 	deleteUser: function (req, res) {
-        User.remove({"id":req.id}, function (err, user) {
+        User.findOne({"id":req.id}, function (err, user) {
             //If there is any error connecting with database or fetching result, send error message as response.
             if (err) {
                 res.json({success: false, statusCode: 500, errorMessage: err});
             }
             //If able to fetch all users then send them in response in data key.
-            res.json({success: true, statusCode: 200});
+            if(user){
+				user.deleted = true;
+				user.save(function (err) {
+					if (err) {
+						return res.json({success: false, statusCode: 500, errorMessage: err});
+					}
+
+					return res.json({
+						success: true,
+						statusCode: 200,
+						message: "User has edited successfully",
+						user: {
+							id: user._id,
+							firstName: user.firstName,
+							lastName: user.lastName,
+							is_admin: user.is_admin,
+							email: user.email,
+							username: user.username,
+							deleted: user.deleted
+						}
+					});
+
+				});
+			}
         })
+
+    }
+	
+	deleteUser: function (req, res) {
+		
+		var token = req.body.token || req.query.token || req.headers['x-access-token'];
+
+        Session.findOne({"token":token}, function (err, session) {
+            //If there is any error connecting with database or fetching result, send error message as response.
+            if (err) {
+                res.json({success: false, statusCode: 500, errorMessage: err});
+            }
+			User.findOne({"_id": session.user_id},function(err,user){
+				if (err) {
+					res.json({success: false, statusCode: 500, errorMessage: err});
+				}
+				if(user.is_admin){
+
+					User.remove({"id":req.id}, function (err, user) {
+					//If there is any error connecting with database or fetching result, send error message as response.
+					if (err) {
+						res.json({success: false, statusCode: 500, errorMessage: err});
+					}
+					
+					res.json({success: true, statusCode: 200});
+					
+				})
+
+				}else{
+
+					return res.json({success: false, statusCode: 403, errMessage: 'Unauthorized Access: No admin user'});
+
+				}
+			})
+
+		})
 
     }
 };
