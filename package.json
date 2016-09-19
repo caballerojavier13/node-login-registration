@@ -20,6 +20,10 @@
     "morgan": "^1.6.1",
     "nodemailer": "^1.4.0",
     "nodemailer-smtp-transport": "^1.0.3",
-    "nodemon": "^1.5.1"
+    "nodemon": "^1.5.1",
+	"mongoose-unique-validator": "^1.0.2",
+	"mongoose-migrate": "^0.2.4",
+	"base64url": "^2.0.0",
+	"crypto": "^0.0.3"
   }
 }

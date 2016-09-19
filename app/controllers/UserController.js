@@ -81,7 +81,7 @@ exports.user = {
 								is_admin: user.is_admin,
 								email: user.email,
 								username: user.username,
-							deleted: user.deleted
+								deleted: user.deleted
 							}
 						});
 
@@ -351,7 +351,7 @@ exports.user = {
 
       },
 
-	deleteUser: function (req, res) {
+	removeUser: function (req, res) {
         User.findOne({"id":req.id}, function (err, user) {
             //If there is any error connecting with database or fetching result, send error message as response.
             if (err) {
@@ -384,7 +384,7 @@ exports.user = {
 			}
         })
 
-    }
+    },
 	
 	deleteUser: function (req, res) {
 		
